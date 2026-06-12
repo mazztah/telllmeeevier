@@ -17,7 +17,7 @@ _plantid_sessions: set = set()
 
 def _get_webapp_url() -> str:
     """Ermittelt die öffentliche URL der Plant-ID Mini-App."""
-    return "https://huggyooo-telllmeeedrei-bot.hf.space/plantid"
+    return "https://telllmeeevier.onrender.com/plantid"
 
 
 def _format_result(data: dict) -> str:
