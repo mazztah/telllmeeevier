@@ -25,7 +25,7 @@ SEMANTIC_SCHOLAR_KEY = os.getenv("SEMANTIC_SCHOLAR_KEY", "")  # optional, erhöh
 
 BASE_URL = os.getenv(
     "PAPERSEARCH_BASE_URL",
-    os.getenv("PUBLIC_APP_BASE_URL", "https://telllmeeedrei.onrender.com"),
+    os.getenv("PUBLIC_APP_BASE_URL", "https://telllmeeevier.onrender.com"),
 ).rstrip("/")
 
 PAPERSEARCH_WEBAPP_URL = f"{BASE_URL}/papersearch"
