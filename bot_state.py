@@ -23,8 +23,25 @@ logger = logging.getLogger(__name__)
 # Environment
 # ═══════════════════════════════════════════════════════════════════════════════
 
-DATA_DIR = Path(os.getenv("DATA_DIR", "./data")).resolve()
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
+try:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+except (PermissionError, OSError) as exc:
+    # "/data" ist nur auf Plattformen mit gemountetem Persistent Storage
+    # beschreibbar (z.B. HF Spaces). Auf Render & Co. ohne Disk existiert
+    # "/data" nicht und kann vom non-root User nicht angelegt werden ->
+    # Fallback auf einen lokalen Ordner neben dem Code.
+    fallback_dir = Path(__file__).resolve().parent / "data"
+    logger.warning(
+        "DATA_DIR '%s' nicht beschreibbar (%s) – verwende Fallback '%s'",
+        DATA_DIR, exc, fallback_dir,
+    )
+    DATA_DIR = fallback_dir
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# Damit andere Module (brain.py, main.py), die DATA_DIR ebenfalls per
+# os.getenv("DATA_DIR", "/data") berechnen, denselben Pfad verwenden.
+os.environ["DATA_DIR"] = str(DATA_DIR)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("XAI_API_KEY")

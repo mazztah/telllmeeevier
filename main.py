@@ -951,15 +951,7 @@ async def polling_loop():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _polling_task, _watchdog_task
-    logger.info("🚀 FastAPI Lifespan Startup (Optimized)...")
-    if application:
-        try:
-            await application.initialize()
-            await application.start()
-            logger.info("✅ Telegram App initialized and started.")
-        except Exception as e:
-            logger.error(f"❌ Fehler beim Start der Telegram App: {e}")
-            
+    logger.info("🚀 FastAPI Lifespan Startup...")
     logger.info(f"USE_WEBHOOK: {USE_WEBHOOK}")
     logger.info(f"WEBHOOK_URL: {WEBHOOK_URL}")
 
@@ -1041,7 +1033,15 @@ app.include_router(superskill_router)
 
 IS_HF_SPACE = os.getenv("SPACE_ID") is not None
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+except (PermissionError, OSError) as exc:
+    DATA_DIR = Path(__file__).resolve().parent / "data"
+    logger.warning(
+        "DATA_DIR nicht beschreibbar (%s) – verwende Fallback '%s'",
+        exc, DATA_DIR,
+    )
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 local_static = Path(__file__).parent / "static"
 if local_static.exists() and local_static.is_dir() and any(local_static.iterdir()):

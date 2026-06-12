@@ -29,7 +29,15 @@ TABLE_NAME = "brain_entries"
 
 # Lokale SQLite-Datenbank
 DB_PATH = Path(os.getenv("DATA_DIR", "/data")) / "brain.sqlite"
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+try:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+except (PermissionError, OSError) as exc:
+    DB_PATH = Path(__file__).resolve().parent / "data" / "brain.sqlite"
+    logger.warning(
+        "Brain-Datenverzeichnis nicht beschreibbar (%s) – verwende Fallback '%s'",
+        exc, DB_PATH.parent,
+    )
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # ── Supabase Client (Singleton, lazy) ─────────────────────────────────────────
 
