@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Environment
 # ═══════════════════════════════════════════════════════════════════════════════
 
-DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
+DATA_DIR = Path(os.getenv("DATA_DIR", "./data")).resolve()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
