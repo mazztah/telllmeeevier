@@ -55,6 +55,12 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 (STATIC_DIR / "css").mkdir(parents=True, exist_ok=True)
 (STATIC_DIR / "js").mkdir(parents=True, exist_ok=True)
 
+from fastapi.staticfiles import StaticFiles
+
+# Mountet statische Dateien für CSS/JS absolut innerhalb der Mini-App
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 logger.info("📁 Sandbox Pfade: ROOT=%s, TEMPLATES=%s, STATIC=%s",
             PROJECT_ROOT, TEMPLATES_DIR, STATIC_DIR)
 
@@ -155,7 +161,7 @@ def _get_fallback_html() -> str:
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/mode-html.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-monokai.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/sandbox/static/css/sandbox.css">
+    <link rel="stylesheet" href="static/css/sandbox.css">
 </head>
 <body>
     <p style="color:red;padding:20px;">⚠️ Template-Datei fehlt. Bitte templates/sandbox.html erstellen.</p>
