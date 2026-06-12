@@ -960,6 +960,13 @@ async def lifespan(app: FastAPI):
         yield
         return
 
+    # Self-Keepalive starten (Render/Railway Free-Tier Wake-Up)
+    try:
+        asyncio.create_task(_self_keepalive())
+        logger.info("✅ Self-Keepalive gestartet")
+    except Exception as e:
+        logger.warning(f"Self-Keepalive konnte nicht gestartet werden: {e}")
+
     # WATCHDOG starten (überwacht Bot-Gesundheit)
     _watchdog_task = asyncio.create_task(application_watchdog())
     logger.info("✅ Application Watchdog gestartet")
@@ -968,19 +975,15 @@ async def lifespan(app: FastAPI):
         if not WEBHOOK_URL:
             logger.error("USE_WEBHOOK=true aber WEBHOOK_URL fehlt!")
         else:
-            # Webhook-Initialisierung als Hintergrund-Task
-            # Nicht awaiten – der Server soll sofort antworten!
             asyncio.create_task(init_webhook_mode())
             logger.info("✅ Webhook-Init-Task gestartet (asynchron)")
             logger.info(f"   → Webhook URL: {WEBHOOK_URL}/webhook")
     else:
-        # Polling-Mode
         _polling_task = asyncio.create_task(polling_loop())
         logger.info("✅ Polling-Task gestartet")
 
     yield
 
-    # SHUTDOWN
     logger.info("🛑 FastAPI Lifespan Shutdown...")
 
     if _watchdog_task and not _watchdog_task.done():
@@ -1012,6 +1015,7 @@ async def lifespan(app: FastAPI):
             logger.warning(f"Fehler beim Herunterfahren: {e}")
 
     logger.info("Shutdown abgeschlossen")
+
 
 
 app = FastAPI(
@@ -1292,9 +1296,42 @@ async def dashboard_info():
     }
 
 
+# ── Self-Keepalive (Render/Railway Free-Tier Wake-Up) ────────────────────────
+async def _self_keepalive():
+    """Pingt den eigenen /ping-Endpoint alle ~4 Minuten (Wake-Up Fix)."""
+    await asyncio.sleep(30)
+
+    port = int(os.getenv("PORT", "7860"))
+    possible_urls = []
+    if WEBHOOK_URL:
+        possible_urls.append(f"{WEBHOOK_URL}/ping")
+    if os.getenv("RENDER_EXTERNAL_URL"):
+        possible_urls.append(f"{os.getenv('RENDER_EXTERNAL_URL').rstrip('/')}/ping")
+    possible_urls.append(f"http://localhost:{port}/ping")
+
+    logger.info("💓 Self-Keepalive startet mit URLs: %s", possible_urls)
+
+    while True:
+        success = False
+        for url in possible_urls:
+            try:
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    resp = await client.get(url)
+                    if resp.status_code == 200:
+                        success = True
+                        break
+            except Exception:
+                continue
+
+        if not success:
+            logger.warning("⚠️ Self-Keepalive: Keine URL erreichbar")
+
+        await asyncio.sleep(240)
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # WEBHOOK ENDPOINT – ROBUST MIT LOGGING
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 _pending_webhook_updates: list = []
 _recent_webhook_update_ids: Dict[int, float] = {}
