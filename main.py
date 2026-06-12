@@ -951,7 +951,15 @@ async def polling_loop():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _polling_task, _watchdog_task
-    logger.info("🚀 FastAPI Lifespan Startup...")
+    logger.info("🚀 FastAPI Lifespan Startup (Optimized)...")
+    if application:
+        try:
+            await application.initialize()
+            await application.start()
+            logger.info("✅ Telegram App initialized and started.")
+        except Exception as e:
+            logger.error(f"❌ Fehler beim Start der Telegram App: {e}")
+            
     logger.info(f"USE_WEBHOOK: {USE_WEBHOOK}")
     logger.info(f"WEBHOOK_URL: {WEBHOOK_URL}")
 
